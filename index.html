@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RainQR - The Free QR Code Generator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+    <!-- Top Navbar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-logo">
+                <strong>RainQR</strong> 
+            </div>
+            <div class="nav-actions">
+                <!-- Upload QR Button -->
+                <label class="theme-btn" title="Upload & Decode QR" style="display:flex; align-items:center; cursor:pointer;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <input type="file" id="nav-qr-upload" accept="image/*" style="display:none;" onchange="handleNavQRUpload(event)">
+                </label>
+
+                <!-- Camera Scanner Button -->
+                <button id="scanner-btn" class="theme-btn" onclick="openScanner()" title="Scan QR Code" style="display:flex; align-items:center;">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                        <circle cx="12" cy="13" r="4"></circle>
+                    </svg>
+                </button>
+                
+                <button id="theme-toggle" class="theme-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">🌙</button>
+                <select id="lang-select" onchange="changeLanguage()">
+                    <option value="en">EN</option>
+                    <option value="tr">TR</option>
+                    <option value="es">ES</option>
+                    <option value="fr">FR</option>
+                    <option value="de">DE</option>
+                    <option value="zh">ZH</option>
+                    <option value="ar">AR</option>
+                    <option value="hi">HI</option>
+                    <option value="ru">RU</option>
+                    <option value="pt">PT</option>
+                </select>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header Section -->
+    <header class="hero">
+        <div class="hero-content">
+            <h1 data-i18n="hero_title">THE 100% FREE QR CODE GENERATOR</h1>
+            <p data-i18n="hero_sub">Create custom QR Codes with Logo, Color and Design</p>
+        </div>
+    </header>
+
+    <!-- Main Generator Area -->
+    <main class="generator-container">
+        
+        <!-- Top Tabs -->
+        <div class="generator-tabs">
+            <button class="tab-btn active" onclick="switchTab('url', event)"><i class="icon">🔗</i> URL</button>
+            <button class="tab-btn" onclick="switchTab('text', event)"><i class="icon">📝</i> Text</button>
+            <button class="tab-btn" onclick="switchTab('email', event)"><i class="icon">✉️</i> Email</button>
+            <button class="tab-btn" onclick="switchTab('phone', event)"><i class="icon">📱</i> Phone</button>
+            <button class="tab-btn" onclick="switchTab('wifi', event)"><i class="icon">📶</i> WiFi</button>
+            <button class="tab-btn" onclick="switchTab('vcard', event)"><i class="icon">📇</i> vCard</button>
+            <button class="tab-btn" onclick="switchTab('sms', event)"><i class="icon">💬</i> SMS</button>
+            <button class="tab-btn" onclick="switchTab('location', event)"><i class="icon">📍</i> Location</button>
+            <button class="tab-btn" onclick="switchTab('event', event)"><i class="icon">📅</i> Event</button>
+            <button class="tab-btn" onclick="switchTab('bulk', event)" style="background: #eef2ff; color:#3b82f6;"><i class="icon">📦</i> Bulk</button>
+        </div>
+
+        <div class="generator-body">
+            
+            <!-- Left Side: Controls -->
+            <div class="controls-panel">
+                
+                <!-- 1. Enter Content -->
+                <div class="accordion-item active" id="section-content">
+                    <div class="accordion-header" onclick="toggleSection('section-content')">
+                        <div class="acc-title"><span class="step-num">1</span> <span data-i18n="sec1">Enter Content</span></div>
+                        <span class="acc-icon">-</span>
+                    </div>
+                    <div class="accordion-body">
+                        
+                        <div class="tab-content">
+                            <!-- URL Tab -->
+                            <div id="tab-url" class="tab-pane active">
+                                <div class="input-group">
+                                    <label for="qr-url">Your URL</label>
+                                    <input type="text" id="qr-url" value="https://www.example.com" placeholder="https://www.example.com">
+                                </div>
+                            </div>
+                            <!-- Text Tab -->
+                            <div id="tab-text" class="tab-pane">
+                                <div class="input-group">
+                                    <label for="qr-text">Your Text</label>
+                                    <textarea id="qr-text" rows="4" placeholder="Enter your text here..."></textarea>
+                                </div>
+                            </div>
+                            <!-- Email Tab -->
+                            <div id="tab-email" class="tab-pane">
+                                <div class="name-grid">
+                                    <div class="input-group">
+                                        <label for="email-address">Email</label>
+                                        <input type="text" id="email-address" placeholder="your@email.com">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="email-subject">Subject</label>
+                                        <input type="text" id="email-subject" placeholder="Subject">
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label for="email-message">Message</label>
+                                    <textarea id="email-message" rows="3" placeholder="Message"></textarea>
+                                </div>
+                            </div>
+                            <!-- Phone Tab -->
+                            <div id="tab-phone" class="tab-pane">
+                                <div class="input-group">
+                                    <label for="phone-number">Phone Number</label>
+                                    <input type="text" id="phone-number" placeholder="+1234567890">
+                                </div>
+                            </div>
+                            <!-- WiFi Tab -->
+                            <div id="tab-wifi" class="tab-pane">
+                                <div class="name-grid">
+                                    <div class="input-group">
+                                        <label for="wifi-ssid">Wireless Network</label>
+                                        <input type="text" id="wifi-ssid" placeholder="SSID">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="wifi-password">Password</label>
+                                        <input type="text" id="wifi-password" placeholder="Password">
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label for="wifi-encryption">Encryption</label>
+                                    <select id="wifi-encryption">
+                                        <option value="WPA">WPA/WPA2</option>
+                                        <option value="WEP">WEP</option>
+                                        <option value="nopass">None</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <!-- vCard Tab -->
+                            <div id="tab-vcard" class="tab-pane">
+                                <div class="name-grid">
+                                    <div class="input-group">
+                                        <label for="vcard-fname">First Name</label>
+                                        <input type="text" id="vcard-fname" placeholder="John">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="vcard-lname">Last Name</label>
+                                        <input type="text" id="vcard-lname" placeholder="Doe">
+                                    </div>
+                                </div>
+                                <div class="name-grid">
+                                    <div class="input-group">
+                                        <label for="vcard-phone">Mobile</label>
+                                        <input type="text" id="vcard-phone" placeholder="+1234567890">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="vcard-email">Email</label>
+                                        <input type="text" id="vcard-email" placeholder="john@example.com">
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label for="vcard-company">Company</label>
+                                    <input type="text" id="vcard-company" placeholder="Company Inc.">
+                                </div>
+                            </div>
+                            <!-- SMS Tab -->
+                            <div id="tab-sms" class="tab-pane">
+                                <div class="input-group">
+                                    <label for="sms-number">Phone Number</label>
+                                    <input type="text" id="sms-number" placeholder="+1234567890">
+                                </div>
+                                <div class="input-group">
+                                    <label for="sms-message">Message</label>
+                                    <textarea id="sms-message" rows="3" placeholder="Hello there!"></textarea>
+                                </div>
+                            </div>
+                            <!-- Location Tab -->
+                            <div id="tab-location" class="tab-pane">
+                                <div class="name-grid">
+                                    <div class="input-group">
+                                        <label for="loc-lat">Latitude</label>
+                                        <input type="text" id="loc-lat" placeholder="40.7128">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="loc-lng">Longitude</label>
+                                        <input type="text" id="loc-lng" placeholder="-74.0060">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Event Tab -->
+                            <div id="tab-event" class="tab-pane">
+                                <div class="input-group">
+                                    <label for="ev-title">Event Title</label>
+                                    <input type="text" id="ev-title" placeholder="Birthday Party">
+                                </div>
+                                <div class="name-grid">
+                                    <div class="input-group">
+                                        <label for="ev-start">Start Date/Time</label>
+                                        <input type="datetime-local" id="ev-start">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="ev-end">End Date/Time</label>
+                                        <input type="datetime-local" id="ev-end">
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Bulk Tab -->
+                            <div id="tab-bulk" class="tab-pane">
+                                <div class="input-group">
+                                    <label for="bulk-data">Enter URLs (one per line)</label>
+                                    <textarea id="bulk-data" rows="6" placeholder="https://google.com&#10;https://youtube.com&#10;https://apple.com"></textarea>
+                                </div>
+                                <button class="btn btn-primary" style="width:100%" onclick="generateBulk()">Generate ZIP Archive</button>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 1.5 Templates -->
+                <div class="accordion-item" id="section-templates">
+                    <div class="accordion-header" onclick="toggleSection('section-templates')">
+                        <div class="acc-title"><span class="step-num">★</span> <span>Templates</span></div>
+                        <span class="acc-icon">+</span>
+                    </div>
+                    <div class="accordion-body" style="display: none;">
+                        <div class="name-grid">
+                            <button class="btn btn-secondary" onclick="applyTemplate('facebook')">Facebook Style</button>
+                            <button class="btn btn-secondary" onclick="applyTemplate('twitter')">Twitter Style</button>
+                            <button class="btn btn-secondary" onclick="applyTemplate('youtube')">YouTube Style</button>
+                            <button class="btn btn-secondary" onclick="applyTemplate('modern')">Modern Rounded</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Set Colors -->
+                <div class="accordion-item" id="section-colors">
+                    <div class="accordion-header" onclick="toggleSection('section-colors')">
+                        <div class="acc-title"><span class="step-num">2</span> <span data-i18n="sec2">Set Colors</span></div>
+                        <span class="acc-icon">+</span>
+                    </div>
+                    <div class="accordion-body" style="display: none;">
+                        <div class="color-options">
+                            <div class="input-group">
+                                <select id="color-type" onchange="toggleGradientOptions()">
+                                    <option value="single">Single Color</option>
+                                    <option value="gradient">Color Gradient</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="color-options">
+                            <div class="input-group">
+                                <label for="color-dark">Foreground Color</label>
+                                <div class="color-picker-wrap">
+                                    <input type="color" id="color-dark" value="#000000">
+                                    <input type="text" id="color-dark-hex" value="#000000" onchange="document.getElementById('color-dark').value = this.value">
+                                </div>
+                            </div>
+                            <div class="input-group" id="gradient-color-group" style="display: none;">
+                                <label for="color-dark-2">Gradient Color</label>
+                                <div class="color-picker-wrap">
+                                    <input type="color" id="color-dark-2" value="#0056b3">
+                                    <input type="text" id="color-dark-2-hex" value="#0056b3" onchange="document.getElementById('color-dark-2').value = this.value">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="color-options" id="gradient-type-group" style="display: none;">
+                            <div class="input-group">
+                                <label for="gradient-type">Gradient Type</label>
+                                <select id="gradient-type">
+                                    <option value="linear">Linear</option>
+                                    <option value="radial">Radial</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="color-options">
+                            <div class="input-group">
+                                <label for="color-light">Background Color</label>
+                                <div class="color-picker-wrap">
+                                    <input type="color" id="color-light" value="#ffffff">
+                                    <input type="text" id="color-light-hex" value="#ffffff" onchange="document.getElementById('color-light').value = this.value">
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr>
+                        
+                        <div class="input-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="custom-eye-color" onchange="toggleEyeColors()">
+                                Custom Eye Color
+                            </label>
+                        </div>
+                        <div class="color-options" id="eye-color-options" style="display: none;">
+                            <div class="input-group">
+                                <label for="color-eye-outer">Eye Frame Color</label>
+                                <div class="color-picker-wrap">
+                                    <input type="color" id="color-eye-outer" value="#000000">
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <label for="color-eye-inner">Eye Ball Color</label>
+                                <div class="color-picker-wrap">
+                                    <input type="color" id="color-eye-inner" value="#000000">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Add Logo Image -->
+                <div class="accordion-item" id="section-logo">
+                    <div class="accordion-header" onclick="toggleSection('section-logo')">
+                        <div class="acc-title"><span class="step-num">3</span> <span data-i18n="sec3">Add Logo Image</span></div>
+                        <span class="acc-icon">+</span>
+                    </div>
+                    <div class="accordion-body" style="display: none;">
+                        <div class="input-group">
+                            <input type="file" id="logo-file" accept="image/*">
+                        </div>
+                        <button class="btn btn-secondary" style="margin-bottom: 15px;" onclick="clearLogo()">Remove Logo</button>
+                        <div class="input-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="logo-remove-bg" checked>
+                                Remove Background Behind Logo
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Customize Design -->
+                <div class="accordion-item" id="section-design">
+                    <div class="accordion-header" onclick="toggleSection('section-design')">
+                        <div class="acc-title"><span class="step-num">4</span> <span data-i18n="sec4">Customize Design</span></div>
+                        <span class="acc-icon">+</span>
+                    </div>
+                    <div class="accordion-body" style="display: none;">
+                        <div class="name-grid">
+                            <div class="input-group">
+                                <label for="dot-type">Body Shape</label>
+                                <select id="dot-type">
+                                    <option value="square">Square</option>
+                                    <option value="dots">Dots</option>
+                                    <option value="rounded">Rounded</option>
+                                    <option value="classy">Classy</option>
+                                    <option value="classy-rounded">Classy Rounded</option>
+                                    <option value="extra-rounded">Extra Rounded</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="corner-square-type">Eye Frame Shape</label>
+                                <select id="corner-square-type">
+                                    <option value="square">Square</option>
+                                    <option value="dot">Dot</option>
+                                    <option value="extra-rounded">Extra Rounded</option>
+                                </select>
+                            </div>
+                            <div class="input-group">
+                                <label for="corner-dot-type">Eye Ball Shape</label>
+                                <select id="corner-dot-type">
+                                    <option value="square">Square</option>
+                                    <option value="dot">Dot</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. History -->
+                <div class="accordion-item" id="section-history">
+                    <div class="accordion-header" onclick="toggleSection('section-history')">
+                        <div class="acc-title"><span class="step-num">5</span> <span>History (Local)</span></div>
+                        <span class="acc-icon">+</span>
+                    </div>
+                    <div class="accordion-body" style="display: none;">
+                        <div id="history-list" style="display:flex; flex-direction:column; gap:10px;">
+                            <p style="color:var(--text-muted); font-size:0.9rem;">No history yet. Generate a QR code to save it here.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Right Side: Preview & Download -->
+            <div class="preview-panel">
+                <div class="qr-preview-container">
+                    <div id="qr-code"></div>
+                </div>
+                
+                <div class="quality-slider-container">
+                    <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">
+                        <span>Low Quality</span>
+                        <span>High Quality</span>
+                    </div>
+                    <input type="range" id="qr-quality" min="200" max="2000" value="1000" step="100" style="width: 100%;">
+                    <div style="text-align: center; font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;" id="quality-display">1000x1000 px</div>
+                </div>
+
+                <button class="btn btn-primary generate-btn" onclick="generateQR()" data-i18n="create_btn">Create QR Code</button>
+                
+                <div class="download-options">
+                    <button class="btn btn-download" onclick="downloadQR('png')">Download PNG</button>
+                    <button class="btn btn-download" onclick="downloadQR('svg')">.SVG</button>
+                    <button class="btn btn-download" onclick="downloadQR('jpeg')">.JPG</button>
+                    <button class="btn btn-download" onclick="downloadQR('webp')">.WEBP</button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Scanner Modal -->
+    <div id="scanner-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:9999; justify-content:center; align-items:center;">
+        <div style="background:var(--surface); padding:20px; border-radius:8px; width:90%; max-width:500px; text-align:center;">
+            <h2>Scan QR Code</h2>
+            <div id="reader" style="width:100%; margin: 15px 0;"></div>
+            <div id="scan-result" style="margin-bottom:15px; font-weight:bold; word-break:break-all; color:var(--primary);"></div>
+            <button class="btn btn-secondary" onclick="closeScanner()">Close Scanner</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        document.getElementById('qr-quality').addEventListener('input', function(e) {
+            document.getElementById('quality-display').innerText = e.target.value + "x" + e.target.value + " px";
+        });
+    </script>
+</body>
+</html>
