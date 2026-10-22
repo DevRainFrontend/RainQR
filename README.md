@@ -1,20 +1,88 @@
-RainQR is a 100% free, highly customizable, and open-source QR code generator built with pure HTML, CSS, and JavaScript. It features a modern user interface inspired by premium QR generators, offering enterprise-level features entirely on the client side without relying on external APIs or paid subscriptions.
-## 🚀 Features
-* **Multiple Data Types**: Generate dynamic and static QR codes for URLs, Text, Emails, Phone Numbers, WiFi networks, vCards, SMS, Locations, and Events.
-* **Highly Customizable Design**: Change colors, apply gradients, set custom eye shapes, and customize the dot patterns (rounded, square, dots).
-* **Custom Logo Upload**: Add your own brand logo to the center of the QR code with optional intelligent background removal settings.
-* **Ready-made Templates**: Apply 1-click social media and modern design templates (Facebook, Twitter, YouTube, Modern).
-* **Built-in Scanner (Decode)**: Instantly decode any QR code by scanning with your camera or uploading an image file right from the top navigation.
-* **Bulk Generation**: Paste a list of URLs and instantly download a ZIP archive containing all the generated QR codes.
-* **Local History**: Automatically saves your recently generated QR codes to your browser's local storage so you never lose your designs.
-* **High-Quality Export**: Download in PNG, SVG, JPG, and WEBP formats at ultra-high resolutions up to 2000x2000 pixels.
-* **Multi-Language Support**: Fully localized in 10 languages (EN, TR, ES, FR, DE, ZH, AR, HI, RU, PT).
-* **Dark / Light Mode**: Eye-friendly theme toggling for comfortable night usage.
-* **Fully Responsive**: Flawlessly adapts to desktop, tablet, and mobile devices with touch-friendly navigation.
-## 📚 Built With (Libraries)
-This project is built using vanilla web technologies and powered by robust open-source libraries:
-* **[qr-code-styling](https://github.com/kozakdenys/qr-code-styling)** - The core engine for generating highly customized QR codes with SVG/Canvas support.
-* **[html5-qrcode](https://github.com/mebjas/html5-qrcode)** - Used for lightweight camera scanning and decoding uploaded images on the fly.
-* **[JSZip](https://github.com/Stuk/jszip)** - Used to bundle mass-generated QR codes into a single downloadable ZIP archive.
-## 📄 License
-This project is for educational and personal use. All underlying libraries remain under their respective MIT Licenses. Feel free to fork, customize, and deploy to your own environment!
+# RainQR
+
+Saf HTML, CSS ve JavaScript (Vanilla JS) ile geliştirilmiş, tamamen tarayıcı üzerinde (istemci taraflı) çalışan hafif ve özelleştirilebilir QR Kod ve Barkod üreticisi.
+
+## Özellikler
+
+- **İstemci Taraflı Çalışma:** Tüm QR kodları ve barkodlar HTML5 Canvas ve SVG kullanılarak doğrudan kullanıcının tarayıcısında üretilir. Hiçbir veri harici sunuculara veya üçüncü parti API'lere gönderilmez.
+- **Çoklu Veri Türleri:**
+  - URL / Web bağlantıları
+  - Düz metin ve notlar (özel `?view_text=` metin okuyucu modu dahil)
+  - WiFi ağ yapılandırması (WPA/WPA2, WEP, gizli ağ desteği)
+  - vCard (Dijital kartvizit)
+  - E-posta (konu ve mesaj şablonuyla)
+  - Telefon numarası ve SMS
+  - Coğrafi konum koordinatları
+  - Takvim etkinlikleri
+- **1D Barkod Desteği:** JsBarcode entegrasyonu ile standart lineer barkodlar (Code 128, EAN-13, EAN-8, UPC, Code 39, ITF vb.).
+- **Tasarım ve Özelleştirme:**
+  - Nokta stilleri: kare, yuvarlak, noktalar, klasik
+  - Köşe kareleri ve iç göz şekli özelleştirme
+  - Düz renkler ve doğrusal/radyal degrade (gradient) geçişleri
+  - Özel logo yükleme (otomatik ortalama ve kenar boşluğu ile)
+  - Çerçeve şablonları ve özel çağrı metinleri ("SCAN ME" vb.)
+  - Arka plan filigran görseli ekleme
+- **Yüksek Çözünürlüklü Dışa Aktarma:** PNG, SVG, WEBP ve JPEG formatlarında 2000x2000 piksele kadar indirme imkanı.
+- **Dahili QR Tarayıcı & Okuyucu:**
+  - Cihaz kamerası ile gerçek zamanlı QR tarama (`html5-qrcode`)
+  - Görsel dosyası yükleyerek QR çözme
+- **Toplu QR Üretimi (Bulk):** Birden fazla bağlantıyı alt alta yapıştırarak tüm QR kodlarını tek seferde ZIP arşivi olarak indirme.
+- **10 Dil Desteği:** Türkçe, İngilizce, İspanyolca, Fransızca, Almanca, Çince, Arapça, Hintçe, Rusça, Portekizce.
+- **PWA & Karanlık Mod:** Çevrimdışı kullanım için Service Worker önbellekleme, yüklenebilir manifest desteği ve tema geçişi.
+
+## Proje Yapısı
+
+```
+RainQR/
+├── index.html       # Ana sayfa ve bileşen yapısı
+├── script.js        # Üretici motoru, çeviriler ve tarayıcı mantığı
+├── style.css        # Arayüz, responsive düzen ve tema stilleri
+├── manifest.json    # PWA kurulum yapılandırması
+├── sw.js            # Çevrimdışı çalışma için Service Worker
+├── robots.txt       # Arama motoru direktifleri
+├── server.py        # İsteğe bağlı yerel Python test sunucusu
+├── .gitignore       # Git güvenlik filtreleri
+├── LICENSE          # MIT Lisansı
+└── README.md        # Proje dokümantasyonu
+```
+
+## Başlangıç ve Yerel Çalıştırma
+
+Proje derleme adımı (build step) veya paket yöneticisi gerektirmeyen saf statik web teknolojileriyle yazılmıştır.
+
+### 1. Yöntem: Doğrudan Tarayıcıda Açma
+`index.html` dosyasına çift tıklayarak doğrudan tarayıcınızda açabilirsiniz.
+
+### 2. Yöntem: Python HTTP Sunucusu
+```bash
+python -m http.server 3000
+```
+Ardından tarayıcınızdan `http://localhost:3000` adresine gidin.
+
+### 3. Yöntem: Dahili Geliştirme Sunucusu
+```bash
+python server.py
+```
+Uygulamayı port 3000 üzerinde başlatır ve `http://localhost:3000/admin` adresinde temel bir yerel panel sunar.
+
+## Dağıtım (Deployment)
+
+Proje tamamen statik dosyalardan oluştuğu için GitHub Pages, Cloudflare Pages, Netlify veya herhangi bir statik web barındırma hizmetinde doğrudan çalışır.
+
+### GitHub Pages ile Yayınlama
+1. Projeyi GitHub reponuza yükleyin.
+2. Reponuzun **Settings > Pages** sekmesine gidin.
+3. **Branch** kısmından `main` dalını seçip kaydedin.
+4. Siteniz birkaç saniye içinde ücretsiz olarak yayına girecektir.
+
+## Kullanılan Kütüphaneler
+
+- [qr-code-styling](https://github.com/kozakdenys/qr-code-styling) - QR kod oluşturma ve SVG/Canvas çizim motoru
+- [JsBarcode](https://github.com/lindell/JsBarcode) - 1D barkod üretimi
+- [html5-qrcode](https://github.com/mebjas/html5-qrcode) - Kamera ve görsel üzerinden QR kod çözme
+- [JSZip](https://github.com/Stuk/jszip) - Toplu üretimde ZIP arşivi oluşturma
+- [html2canvas](https://github.com/niklasvh/html2canvas) - Çerçeveli QR kodlarının ekran yakalama ile dışa aktarımı
+
+## Lisans
+
+Bu proje [MIT Lisansı](LICENSE) altında sunulmaktadır.
