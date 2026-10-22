@@ -3,12 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <meta name="description" content="RainQR is a 100% free, highly customizable QR Code and 1D Barcode generator. Create QR codes with logos, frames, and custom designs instantly without limits.">
+    <meta name="keywords" content="QR Code Generator, Free QR Code, Barcode Generator, Create QR, Custom QR Code, WiFi QR, VCard QR, EAN-13, Code 128">
+    <meta name="author" content="RainbowDev">
+    <meta property="og:title" content="RainQR - Free Advanced QR Code & Barcode Generator">
+    <meta property="og:description" content="Create custom QR codes with logos, colors, and beautiful frames for free. Support for Bulk generation and 20+ barcode formats.">
+    <meta property="og:url" content="https://qr.rainbowdev.com.tr">
+    <meta property="og:type" content="website">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3b82f6">
+
     <title>RainQR - The Free QR Code Generator</title>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script type="text/javascript" src="https://unpkg.com/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
 </head>
 <body>
     <!-- Top Navbar -->
@@ -29,7 +43,7 @@
                 </label>
 
                 <!-- Camera Scanner Button -->
-                <button id="scanner-btn" class="theme-btn" onclick="openScanner()" title="Scan QR Code" style="display:flex; align-items:center;">
+                                                <button id="scanner-btn" class="theme-btn" onclick="openScanner()" title="Scan QR Code" style="display:flex; align-items:center;">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
                         <circle cx="12" cy="13" r="4"></circle>
@@ -64,7 +78,17 @@
     <!-- Main Generator Area -->
     <main class="generator-container">
         
+        
+        <!-- Mode Switcher -->
+        <div style="width:100%; display:flex; justify-content:center; margin-bottom: 25px;">
+            <div style="display:inline-flex; background:var(--surface); border-radius:50px; border:1px solid var(--border); overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.05);">
+                <button id="btn-qr-mode" data-i18n="btn_qr" onclick="setMode('qr')" style="padding:12px 40px; border:none; background:var(--primary); color:white; font-weight:bold; font-size:1.1rem; cursor:pointer; transition:0.3s;">▦ QR Code Generator</button>
+                <button id="btn-barcode-mode" data-i18n="btn_bar" onclick="setMode('barcode')" style="padding:12px 40px; border:none; background:transparent; color:var(--text-main); font-weight:bold; font-size:1.1rem; cursor:pointer; transition:0.3s;">||| Barcode Generator</button>
+            </div>
+        </div>
+        
         <!-- Top Tabs -->
+
         <div class="generator-tabs">
             <button class="tab-btn active" onclick="switchTab('url', event)"><i class="icon">🔗</i> URL</button>
             <button class="tab-btn" onclick="switchTab('text', event)"><i class="icon">📝</i> Text</button>
@@ -72,10 +96,10 @@
             <button class="tab-btn" onclick="switchTab('phone', event)"><i class="icon">📱</i> Phone</button>
             <button class="tab-btn" onclick="switchTab('wifi', event)"><i class="icon">📶</i> WiFi</button>
             <button class="tab-btn" onclick="switchTab('vcard', event)"><i class="icon">📇</i> vCard</button>
-            <button class="tab-btn" onclick="switchTab('sms', event)"><i class="icon">💬</i> SMS</button>
-            <button class="tab-btn" onclick="switchTab('location', event)"><i class="icon">📍</i> Location</button>
-            <button class="tab-btn" onclick="switchTab('event', event)"><i class="icon">📅</i> Event</button>
-            <button class="tab-btn" onclick="switchTab('bulk', event)" style="background: #eef2ff; color:#3b82f6;"><i class="icon">📦</i> Bulk</button>
+            <button class="tab-btn" onclick="switchTab('sms', event)"><i class="icon">💬</i data-i18n="tab_sms"> SMS</button>
+            <button class="tab-btn" onclick="switchTab('location', event)"><i class="icon">📍</i data-i18n="tab_loc"> Location</button>
+            <button class="tab-btn" onclick="switchTab('event', event)"><i class="icon">📅</i data-i18n="tab_event"> Event</button>
+            <button class="tab-btn bulk-btn" onclick="switchTab('bulk', event)"><i class="icon">📦</i data-i18n="tab_bulk"> Bulk</button>
         </div>
 
         <div class="generator-body">
@@ -91,6 +115,41 @@
                     </div>
                     <div class="accordion-body">
                         
+                        
+                            <!-- Barcode Mode Controls -->
+                            <div id="barcode-controls" style="display:none; padding:15px 0;">
+                                <div class="input-group">
+                                    <label>Barcode Type</label>
+                                    <select id="barcode-type" onchange="generateBarcode()">
+                                        <option value="CODE128">CODE 128 (Text & Numbers - Universal)</option>
+                                        <option value="CODE128A">CODE 128 A</option>
+                                        <option value="CODE128B">CODE 128 B</option>
+                                        <option value="CODE128C">CODE 128 C</option>
+                                        <option value="CODE39">CODE 39 (Standard Alphanumeric)</option>
+                                        <option value="EAN13">EAN-13 (12/13 Digits - Retail)</option>
+                                        <option value="EAN8">EAN-8 (7/8 Digits - Small Retail)</option>
+                                        <option value="EAN5">EAN-5 (Add-on)</option>
+                                        <option value="EAN2">EAN-2 (Add-on)</option>
+                                        <option value="UPC">UPC (11/12 Digits - US Retail)</option>
+                                        <option value="UPCE">UPC-E</option>
+                                        <option value="ITF14">ITF-14 (13/14 Digits - Shipping)</option>
+                                        <option value="ITF">ITF</option>
+                                        <option value="MSI">MSI (Inventory)</option>
+                                        <option value="MSI10">MSI 10</option>
+                                        <option value="MSI11">MSI 11</option>
+                                        <option value="MSI1010">MSI 1010</option>
+                                        <option value="MSI1110">MSI 1110</option>
+                                        <option value="pharmacode">Pharmacode (Medical)</option>
+                                        <option value="codabar">Codabar (Libraries / Blood Banks)</option>
+                                    </select>
+                                </div>
+                                <div class="input-group">
+                                    <label>Barcode Value</label>
+                                    <input type="text" id="barcode-value" value="123456789012" oninput="generateBarcode()">
+                                    <small style="color:var(--text-muted); margin-top:5px; display:block;">Note: EAN and UPC only support numbers of specific length.</small>
+                                </div>
+                            </div>
+
                         <div class="tab-content">
                             <!-- URL Tab -->
                             <div id="tab-url" class="tab-pane active">
@@ -235,7 +294,7 @@
                 <!-- 1.5 Templates -->
                 <div class="accordion-item" id="section-templates">
                     <div class="accordion-header" onclick="toggleSection('section-templates')">
-                        <div class="acc-title"><span class="step-num">★</span> <span>Templates</span></div>
+                        <div class="acc-title"><span class="step-num">2</span> <span data-i18n="sec_temp">Templates</span></div>
                         <span class="acc-icon">+</span>
                     </div>
                     <div class="accordion-body" style="display: none;">
@@ -251,7 +310,7 @@
                 <!-- 2. Set Colors -->
                 <div class="accordion-item" id="section-colors">
                     <div class="accordion-header" onclick="toggleSection('section-colors')">
-                        <div class="acc-title"><span class="step-num">2</span> <span data-i18n="sec2">Set Colors</span></div>
+                        <div class="acc-title"><span class="step-num">3</span> <span data-i18n="sec2">Set Colors</span></div>
                         <span class="acc-icon">+</span>
                     </div>
                     <div class="accordion-body" style="display: none;">
@@ -326,7 +385,7 @@
                 <!-- 3. Add Logo Image -->
                 <div class="accordion-item" id="section-logo">
                     <div class="accordion-header" onclick="toggleSection('section-logo')">
-                        <div class="acc-title"><span class="step-num">3</span> <span data-i18n="sec3">Add Logo Image</span></div>
+                        <div class="acc-title"><span class="step-num">4</span> <span data-i18n="sec3">Add Logo Image</span></div>
                         <span class="acc-icon">+</span>
                     </div>
                     <div class="accordion-body" style="display: none;">
@@ -340,13 +399,76 @@
                                 Remove Background Behind Logo
                             </label>
                         </div>
+                        <label style="margin-top:15px; display:block; font-size:0.9rem;">Or use a popular icon:</label>
+                        <div class="icon-gallery" style="display:flex; gap:10px; margin-top:5px; flex-wrap:wrap;">
+                            <button class="btn btn-secondary" style="padding:5px 10px;" onclick="setSocialLogo('whatsapp')">WhatsApp</button>
+                            <button class="btn btn-secondary" style="padding:5px 10px;" onclick="setSocialLogo('instagram')">Instagram</button>
+                            <button class="btn btn-secondary" style="padding:5px 10px;" onclick="setSocialLogo('youtube')">YouTube</button>
+                            <button class="btn btn-secondary" style="padding:5px 10px;" onclick="setSocialLogo('wifi')">WiFi</button>
+                            <button class="btn btn-secondary" style="padding:5px 10px;" onclick="setSocialLogo('pdf')">PDF</button>
+                        </div>
+
+                    </div>
+                </div>
+
+                
+                
+
+
+                
+                <!-- 3.2 Background Image -->
+                <div class="accordion-item" id="section-bg">
+                    <div class="accordion-header" onclick="toggleSection('section-bg')">
+                        <div class="acc-title"><span class="step-num">5</span> <span>Add Background Image</span></div>
+                        <span class="acc-icon">+</span>
+                    </div>
+                    <div class="accordion-body" style="display: none;">
+                        <div class="input-group">
+                            <label>Upload Background Image (Watermark)</label>
+                            <div class="file-upload">
+                                <input type="file" id="bg-upload" accept="image/*">
+                                <label for="bg-upload" class="upload-btn">Upload Background</label>
+                            </div>
+                            <div style="margin-top: 10px;">
+                                <button class="btn btn-secondary" style="padding: 5px 10px;" onclick="clearBg()">Remove Background</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3.5 Add Frame & Text -->
+                <div class="accordion-item" id="section-frame">
+                    <div class="accordion-header" onclick="toggleSection('section-frame')">
+                        <div class="acc-title"><span class="step-num">6</span> <span data-i18n="sec_frame">Add Frame & Text</span></div>
+                        <span class="acc-icon">+</span>
+                    </div>
+                    <div class="accordion-body" style="display: none;">
+                        <div class="input-group">
+                            <label>Frame Style</label>
+                            <select id="frame-style" onchange="updateFrame()">
+                                <option value="none">No Frame</option>
+                                <option value="bottom-bubble">Bottom Bubble</option>
+                                <option value="top-badge">Top Badge</option>
+                                <option value="simple-border">Simple Border</option>
+                            </select>
+                        </div>
+                        <div class="input-group">
+                            <label>Frame Text (Call to Action)</label>
+                            <input type="text" id="frame-text" value="SCAN ME" oninput="updateFrame()">
+                        </div>
+                        <div class="input-group">
+                            <label>Frame Color</label>
+                            <div class="color-picker-wrap">
+                                <input type="color" id="frame-color" value="#0056b3" onchange="updateFrame()">
+                            </div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- 4. Customize Design -->
                 <div class="accordion-item" id="section-design">
                     <div class="accordion-header" onclick="toggleSection('section-design')">
-                        <div class="acc-title"><span class="step-num">4</span> <span data-i18n="sec4">Customize Design</span></div>
+                        <div class="acc-title"><span class="step-num">7</span> <span data-i18n="sec4">Customize Design</span></div>
                         <span class="acc-icon">+</span>
                     </div>
                     <div class="accordion-body" style="display: none;">
@@ -384,7 +506,7 @@
                 <!-- 5. History -->
                 <div class="accordion-item" id="section-history">
                     <div class="accordion-header" onclick="toggleSection('section-history')">
-                        <div class="acc-title"><span class="step-num">5</span> <span>History (Local)</span></div>
+                        <div class="acc-title"><span class="step-num">8</span> <span data-i18n="sec_hist">History (Local)</span></div>
                         <span class="acc-icon">+</span>
                     </div>
                     <div class="accordion-body" style="display: none;">
@@ -398,9 +520,16 @@
 
             <!-- Right Side: Preview & Download -->
             <div class="preview-panel">
+                
                 <div class="qr-preview-container">
-                    <div id="qr-code"></div>
+                    <svg id="barcode" style="display:none; max-width:100%;"></svg>
+                    <div id="qr-frame-wrapper" class="">
+                        <div id="frame-text-top" class="frame-text" style="display:none;">SCAN ME</div>
+                        <div id="qr-code"></div>
+                        <div id="frame-text-bottom" class="frame-text" style="display:none;">SCAN ME</div>
+                    </div>
                 </div>
+
                 
                 <div class="quality-slider-container">
                     <div style="display: flex; justify-content: space-between; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px;">
@@ -414,7 +543,7 @@
                 <button class="btn btn-primary generate-btn" onclick="generateQR()" data-i18n="create_btn">Create QR Code</button>
                 
                 <div class="download-options">
-                    <button class="btn btn-download" onclick="downloadQR('png')">Download PNG</button>
+<button class="btn btn-download" onclick="downloadQR('png')">Download PNG</button>
                     <button class="btn btn-download" onclick="downloadQR('svg')">.SVG</button>
                     <button class="btn btn-download" onclick="downloadQR('jpeg')">.JPG</button>
                     <button class="btn btn-download" onclick="downloadQR('webp')">.WEBP</button>
