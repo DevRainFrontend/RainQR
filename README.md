@@ -65,16 +65,6 @@ python server.py
 ```
 Uygulamayı port 3000 üzerinde başlatır ve `http://localhost:3000/admin` adresinde temel bir yerel panel sunar.
 
-## Dağıtım (Deployment)
-
-Proje tamamen statik dosyalardan oluştuğu için GitHub Pages, Cloudflare Pages, Netlify veya herhangi bir statik web barındırma hizmetinde doğrudan çalışır.
-
-### GitHub Pages ile Yayınlama
-1. Projeyi GitHub reponuza yükleyin.
-2. Reponuzun **Settings > Pages** sekmesine gidin.
-3. **Branch** kısmından `main` dalını seçip kaydedin.
-4. Siteniz birkaç saniye içinde ücretsiz olarak yayına girecektir.
-
 ## Kullanılan Kütüphaneler
 
 - [qr-code-styling](https://github.com/kozakdenys/qr-code-styling) - QR kod oluşturma ve SVG/Canvas çizim motoru
