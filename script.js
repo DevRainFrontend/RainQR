@@ -1,5 +1,36 @@
+
+const urlParams = new URLSearchParams(window.location.search);
+if (urlParams.has('view_text')) {
+    document.body.innerHTML = `
+        <div style="display:flex; justify-content:center; align-items:center; min-height:100vh; background: #f8fafc; font-family: 'Roboto', sans-serif; padding: 20px;">
+            <div style="background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 600px; width: 100%; text-align: center;">
+                <h2 style="color: #3b82f6; margin-top:0; margin-bottom: 20px;">Okunan Metin / Not</h2>
+                <div style="font-size: 1.2rem; line-height: 1.6; color: #333; white-space: pre-wrap; word-break: break-word; text-align: left; background: #f1f5f9; padding: 15px; border-radius: 8px; border: 1px solid #e2e8f0; max-height: 60vh; overflow-y: auto;">
+                    ${decodeURIComponent(urlParams.get('view_text')).replace(/</g, "&lt;").replace(/>/g, "&gt;")}
+                </div>
+                <a href="/" style="display:inline-block; margin-top:20px; text-decoration:none; background:#3b82f6; color:white; padding: 10px 20px; border-radius: 8px; font-weight:bold;">Kendi QR Kodunu Oluştur</a>
+            </div>
+        </div>
+    `;
+    // Stop further script execution by overriding functions
+    window.generateQR = function(){};
+    throw new Error('View text mode active. Stopped execution.');
+}
+
+
+// Register Service Worker for PWA Offline Support
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').then(registration => {
+      console.log('PWA ServiceWorker registered successfully');
+    }).catch(err => {
+      console.log('PWA ServiceWorker registration failed: ', err);
+    });
+  });
+}
+
 const translations = {
-    en: { hero_title: "THE 100% FREE QR CODE GENERATOR", hero_sub: "Create custom QR Codes with Logo, Color and Design", sec1: "Enter Content", sec2: "Set Colors", sec3: "Add Logo Image", sec4: "Customize Design", create_btn: "Create QR Code" },
+    en: { hero_title: "THE 100% FREE QR CODE GENERATOR", hero_sub: "Create custom QR Codes with Logo, Color and Design", sec1: "Enter Content", sec2: "Set Colors", sec3: "Add Logo Image", sec_frame: "Add Frame & Text", sec4: "Customize Design", sec_temp: "Templates", sec_hist: "History (Local)", create_btn: "Create QR Code", create_bar: "Create Barcode", btn_qr: "▦ QR Code Generator", btn_bar: "||| Barcode Generator", tab_bulk: "Bulk", tab_sms: "SMS", tab_loc: "Location", tab_event: "Event" },
     tr: { hero_title: "%100 ÜCRETSİZ QR KOD OLUŞTURUCU", hero_sub: "Logo, Renk ve Tasarım ile özel QR Kodları oluşturun", sec1: "İçerik Girin", sec2: "Renkleri Ayarlayın", sec3: "Logo Ekleyin", sec4: "Tasarımı Özelleştirin", create_btn: "QR Kod Oluştur" },
     es: { hero_title: "GENERADOR DE CÓDIGOS QR 100% GRATIS", hero_sub: "Crea códigos QR personalizados con Logo, Color y Diseño", sec1: "Ingresar Contenido", sec2: "Configurar Colores", sec3: "Añadir Logo", sec4: "Personalizar Diseño", create_btn: "Crear Código QR" },
     fr: { hero_title: "GÉNÉRATEUR DE QR CODE 100% GRATUIT", hero_sub: "Créez des QR Codes personnalisés avec Logo, Couleur et Design", sec1: "Entrer le Contenu", sec2: "Définir les Couleurs", sec3: "Ajouter un Logo", sec4: "Personnaliser le Design", create_btn: "Créer un QR Code" },
@@ -17,8 +48,8 @@ let currentTab = 'url';
 let isDarkMode = false;
 let html5QrcodeScanner = null;
 
-// Log visit on load
-fetch('/api/log_visit', { method: 'POST' }).catch(() => {});
+// Site loaded
+
 
 function toggleTheme() {
     isDarkMode = !isDarkMode;
@@ -38,48 +69,90 @@ function changeLanguage() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Initialize QR Code
-    qrCode = new QRCodeStyling({
-        width: 300,
-        height: 300,
-        type: "canvas",
-        data: "https://www.example.com",
-        image: "",
-        dotsOptions: {
-            color: "#000000",
-            type: "square"
-        },
-        backgroundOptions: {
-            color: "#ffffff",
-        },
-        imageOptions: {
-            crossOrigin: "anonymous",
-            margin: 10
-        },
-        cornersSquareOptions: {
-            type: "square",
-            color: "#000000"
-        },
-        cornersDotOptions: {
-            type: "square",
-            color: "#000000"
-        }
-    });
+    if (urlParams.has('view_text')) return;
 
-    qrCode.append(document.getElementById("qr-code"));
+    // Initialize QR Code
+    const qrContainer = document.getElementById("qr-code");
+    if (qrContainer) {
+        qrCode = new QRCodeStyling({
+            width: 300,
+            height: 300,
+            type: "canvas",
+            data: "https://www.example.com",
+            image: "",
+            dotsOptions: {
+                color: "#000000",
+                type: "square",
+                errorCorrectionLevel: document.getElementById("error-correction") ? document.getElementById("error-correction").value : "Q"
+            },
+            backgroundOptions: {
+                color: "#ffffff",
+            },
+            imageOptions: {
+                crossOrigin: "anonymous",
+                margin: 10
+            },
+            cornersSquareOptions: {
+                type: "square",
+                errorCorrectionLevel: document.getElementById("error-correction") ? document.getElementById("error-correction").value : "Q",
+                color: "#000000"
+            },
+            cornersDotOptions: {
+                type: "square",
+                errorCorrectionLevel: document.getElementById("error-correction") ? document.getElementById("error-correction").value : "Q",
+                color: "#000000"
+            }
+        });
+
+        qrCode.append(qrContainer);
+    }
 
     // Handle normal logo upload
-    document.getElementById('logo-file').addEventListener('change', function(e) {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onload = function(event) {
-                uploadedLogo = event.target.result;
+    const logoInput = document.getElementById('logo-file');
+    if (logoInput) {
+        logoInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    uploadedLogo = event.target.result;
+                    generateQR();
+                };
+                reader.readAsDataURL(file);
             }
-            reader.readAsDataURL(file);
-        }
-    });
-    
+        });
+    }
+
+    // Handle background image upload
+    const bgInput = document.getElementById('bg-upload');
+    if (bgInput) {
+        bgInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    window.uploadedBg = event.target.result;
+                    const wrapper = document.getElementById('qr-frame-wrapper');
+                    if (wrapper) {
+                        wrapper.style.backgroundImage = `url(${window.uploadedBg})`;
+                        wrapper.style.backgroundSize = 'cover';
+                        wrapper.style.backgroundPosition = 'center';
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    }
+
+    // Quality slider real-time label update
+    const qualitySlider = document.getElementById('qr-quality');
+    const qualityDisplay = document.getElementById('quality-display');
+    if (qualitySlider && qualityDisplay) {
+        qualitySlider.addEventListener('input', function() {
+            qualityDisplay.textContent = `${this.value}x${this.value} px`;
+        });
+    }
+
     loadHistory();
 });
 
@@ -104,18 +177,32 @@ function switchTab(tabId, event) {
     currentTab = tabId;
     
     document.querySelectorAll('.tab-pane').forEach(el => el.classList.remove('active'));
-    document.getElementById('tab-' + tabId).classList.add('active');
+    const pane = document.getElementById('tab-' + tabId);
+    if (pane) pane.classList.add('active');
     
     document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-    if (event) {
+    if (event && event.currentTarget) {
         event.currentTarget.classList.add('active');
+    } else {
+        const btn = document.querySelector(`.tab-btn[onclick*="'${tabId}'"]`);
+        if (btn) btn.classList.add('active');
     }
 }
 
 function clearLogo() {
-    document.getElementById('logo-file').value = '';
+    const input = document.getElementById('logo-file');
+    if (input) input.value = '';
     uploadedLogo = null;
+    generateQR();
 }
+
+window.clearBg = function() {
+    window.uploadedBg = null;
+    const bgInput = document.getElementById('bg-upload');
+    if (bgInput) bgInput.value = '';
+    const wrapper = document.getElementById('qr-frame-wrapper');
+    if (wrapper) wrapper.style.backgroundImage = 'none';
+};
 
 function getQRData() {
     if (currentTab === 'url') return document.getElementById('qr-url').value || 'https://example.com';
@@ -227,26 +314,73 @@ function getQROptions(data) {
     };
 }
 
-function generateQR() {
+window.generateQR = function() {
+    if (typeof isBarcodeMode !== "undefined" && isBarcodeMode) { generateBarcode(); return; }
     if (currentTab === 'bulk') return; // Bulk handled separately
 
     const data = getQRData();
     const options = getQROptions(data);
     qrCode.update(options);
+    if (typeof isBarcodeMode !== 'undefined' && isBarcodeMode) generateBarcode();
     
     saveToHistory(data);
-
-    fetch('/api/log_qr', { method: 'POST' }).catch(() => {});
 }
 
-function downloadQR(extension) {
+
+async function downloadQR(extension) {
+
+    if (typeof isBarcodeMode !== 'undefined' && isBarcodeMode) {
+        const svg = document.getElementById('barcode');
+        const serializer = new XMLSerializer();
+        let source = serializer.serializeToString(svg);
+        if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+            source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+        }
+        const url = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(source);
+        
+        if (extension === 'svg') {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `RainBarcode_${new Date().getTime()}.svg`;
+            link.click();
+        } else {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            img.onload = function() {
+                canvas.width = img.width;
+                canvas.height = img.height;
+                ctx.drawImage(img, 0, 0);
+                const link = document.createElement('a');
+                link.href = canvas.toDataURL(`image/${extension}`);
+                link.download = `RainBarcode_${new Date().getTime()}.${extension}`;
+                link.click();
+            }
+            img.src = url;
+        }
+        return;
+    }
+
     if (currentTab === 'bulk') {
         alert("Use Generate ZIP button for bulk.");
         return;
     }
+    const style = document.getElementById('frame-style').value;
     const filename = `RainQR_${new Date().getTime()}`;
-    qrCode.download({ name: filename, extension: extension });
+    
+    if ((style !== 'none' || window.uploadedBg) && (extension === 'png' || extension === 'jpeg' || extension === 'webp')) {
+        const wrapper = document.getElementById('qr-frame-wrapper');
+        const canvas = await html2canvas(wrapper, { backgroundColor: null, scale: 3, useCORS: true });
+        const dataUrl = canvas.toDataURL(`image/${extension}`);
+        const link = document.createElement('a');
+        link.download = `${filename}.${extension}`;
+        link.href = dataUrl;
+        link.click();
+    } else {
+        qrCode.download({ name: filename, extension: extension });
+    }
 }
+
 
 function toggleGradientOptions() {
     const isGradient = document.getElementById('color-type').value === 'gradient';
@@ -292,15 +426,40 @@ function applyTemplate(type) {
 /* History */
 function loadHistory() {
     const list = document.getElementById('history-list');
+    if (!list) return;
     let history = JSON.parse(localStorage.getItem('qr_history') || '[]');
-    if(history.length === 0) return;
+    if (history.length === 0) return;
     
     list.innerHTML = '';
-    history.forEach((item, index) => {
+    history.forEach((item) => {
         let div = document.createElement('div');
-        div.style = "padding:10px; border:1px solid var(--border); border-radius:4px; display:flex; justify-content:space-between;";
-        div.innerHTML = `<span style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80%;">${item}</span>
-                         <button style="border:none; background:var(--primary); color:white; padding:2px 8px; border-radius:3px; cursor:pointer;" onclick="restoreHistory('${btoa(unescape(encodeURIComponent(item)))}')">Load</button>`;
+        div.style.padding = "10px";
+        div.style.border = "1px solid var(--border)";
+        div.style.borderRadius = "4px";
+        div.style.display = "flex";
+        div.style.justifyContent = "space-between";
+        div.style.alignItems = "center";
+        div.style.marginBottom = "6px";
+
+        let span = document.createElement('span');
+        span.style.overflow = "hidden";
+        span.style.textOverflow = "ellipsis";
+        span.style.whiteSpace = "nowrap";
+        span.style.maxWidth = "80%";
+        span.textContent = item;
+
+        let btn = document.createElement('button');
+        btn.style.border = "none";
+        btn.style.background = "var(--primary)";
+        btn.style.color = "white";
+        btn.style.padding = "4px 10px";
+        btn.style.borderRadius = "3px";
+        btn.style.cursor = "pointer";
+        btn.textContent = "Load";
+        btn.onclick = () => restoreHistory(btoa(unescape(encodeURIComponent(item))));
+
+        div.appendChild(span);
+        div.appendChild(btn);
         list.appendChild(div);
     });
 }
@@ -393,5 +552,192 @@ function handleNavQRUpload(event) {
     })
     .finally(() => {
         event.target.value = ''; // Reset file input
+    });
+}
+
+
+window.updateFrame = function() {
+    const style = document.getElementById('frame-style').value;
+    const text = document.getElementById('frame-text').value;
+    const color = document.getElementById('frame-color').value;
+    
+    const wrapper = document.getElementById('qr-frame-wrapper');
+    const topText = document.getElementById('frame-text-top');
+    const bottomText = document.getElementById('frame-text-bottom');
+    
+    wrapper.className = '';
+    topText.style.display = 'none';
+    bottomText.style.display = 'none';
+    wrapper.style.backgroundColor = 'transparent';
+    wrapper.style.borderColor = 'transparent';
+    topText.style.backgroundColor = 'transparent';
+    bottomText.style.backgroundColor = 'transparent';
+    topText.style.color = '#fff';
+    bottomText.style.color = '#fff';
+
+    topText.innerText = text;
+    bottomText.innerText = text;
+
+    if (style === 'bottom-bubble') {
+        wrapper.classList.add('frame-bottom-bubble');
+        wrapper.style.backgroundColor = color;
+        bottomText.style.backgroundColor = color;
+    } else if (style === 'top-badge') {
+        wrapper.classList.add('frame-top-badge');
+        wrapper.style.backgroundColor = color;
+        topText.style.backgroundColor = color;
+    } else if (style === 'simple-border') {
+        wrapper.classList.add('frame-simple-border');
+        wrapper.style.borderColor = color;
+        bottomText.style.color = color;
+    }
+}
+
+window.setSocialLogo = function(type) {
+    const urls = {
+        'whatsapp': 'https://upload.wikimedia.org/wikipedia/commons/6/6b/WhatsApp.svg',
+        'instagram': 'https://upload.wikimedia.org/wikipedia/commons/e/e7/Instagram_logo_2016.svg',
+        'youtube': 'https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg',
+        'wifi': 'https://upload.wikimedia.org/wikipedia/commons/a/ae/WiFi_Logo.svg',
+        'pdf': 'https://upload.wikimedia.org/wikipedia/commons/8/87/PDF_file_icon.svg'
+    };
+    uploadedLogo = urls[type];
+    generateQR();
+    toggleSection('section-logo');
+}
+
+
+let isBarcodeMode = false;
+
+window.toggleBarcodeMode = function() {
+    isBarcodeMode = !isBarcodeMode;
+    const btnQr = document.getElementById('btn-qr-mode');
+    const btnBarcode = document.getElementById('btn-barcode-mode');
+    
+    const qrTabs = document.querySelector('.generator-tabs');
+    const qrControls = document.querySelectorAll('.accordion-item:not(#section-content):not(#section-colors)');
+    const barcodeControls = document.getElementById('barcode-controls');
+    const qrWrapper = document.getElementById('qr-frame-wrapper');
+    const barcodeWrapper = document.getElementById('barcode');
+    const createBtn = document.querySelector('.generate-btn');
+    const tabContent = document.querySelector('.tab-content');
+
+    if (isBarcodeMode) {
+        if(btnQr) {
+            btnQr.style.background = 'transparent';
+            btnQr.style.color = 'var(--text-main)';
+            btnBarcode.style.background = 'var(--primary)';
+            btnBarcode.style.color = 'white';
+        }
+        
+        qrTabs.style.display = 'none';
+        qrControls.forEach(el => el.style.display = 'none');
+        tabContent.style.display = 'none';
+        
+        barcodeControls.style.display = 'block';
+        qrWrapper.style.display = 'none';
+        barcodeWrapper.style.display = 'block';
+        createBtn.innerText = "Create Barcode";
+        
+        generateBarcode();
+    } else {
+        if(btnQr) {
+            btnQr.style.background = 'var(--primary)';
+            btnQr.style.color = 'white';
+            btnBarcode.style.background = 'transparent';
+            btnBarcode.style.color = 'var(--text-main)';
+        }
+        
+        qrTabs.style.display = ''; 
+        qrControls.forEach(el => el.style.display = 'block');
+        tabContent.style.display = 'block';
+        
+        barcodeControls.style.display = 'none';
+        qrWrapper.style.display = 'inline-flex';
+        barcodeWrapper.style.display = 'none';
+        createBtn.innerText = "Create QR Code";
+        
+        generateQR();
+    }
+}
+
+window.generateBarcode = function() {
+    if (!isBarcodeMode) return;
+    const format = document.getElementById('barcode-type').value;
+    const value = document.getElementById('barcode-value').value || "123456789012";
+    const color = document.getElementById('color-dark').value;
+    const background = document.getElementById('color-light').value;
+    
+    try {
+        JsBarcode("#barcode", value, {
+            format: format,
+            lineColor: color,
+            background: background,
+            width: 2,
+            height: 100,
+            displayValue: true
+        });
+    } catch(e) {
+        // Ignore format mismatch errors during typing
+    }
+}
+
+
+window.setMode = function(mode) {
+    if (mode === 'qr' && isBarcodeMode) {
+        toggleBarcodeMode();
+    } else if (mode === 'barcode' && !isBarcodeMode) {
+        toggleBarcodeMode();
+    }
+}
+
+
+window.shareQR = async function() {
+    const style = document.getElementById('frame-style').value;
+    let canvasElement;
+    
+    if (typeof isBarcodeMode !== 'undefined' && isBarcodeMode) {
+        alert("Barcode sharing requires downloading first for now."); return;
+    } else if (style !== 'none' || window.uploadedBg) {
+        const wrapper = document.getElementById('qr-frame-wrapper');
+        canvasElement = await html2canvas(wrapper, { backgroundColor: null, scale: 2, useCORS: true });
+    } else {
+        canvasElement = document.querySelector('#qr-code canvas');
+    }
+    
+    if (!canvasElement) {
+        alert("Please generate a QR code first.");
+        return;
+    }
+
+    canvasElement.toBlob(async (blob) => {
+        const file = new File([blob], "RainQR.png", { type: "image/png" });
+        let clipboardSuccess = false;
+        
+        try {
+            if (navigator.clipboard && window.ClipboardItem) {
+                const item = new ClipboardItem({ "image/png": blob });
+                await navigator.clipboard.write([item]);
+                clipboardSuccess = true;
+            }
+        } catch (e) {
+            console.log("Clipboard write failed:", e);
+        }
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            try {
+                await navigator.share({
+                    files: [file],
+                    title: 'RainQR Code',
+                    text: 'Generated with RainQR'
+                });
+            } catch (err) {}
+        } else {
+            if (clipboardSuccess) {
+                alert("QR Code copied to clipboard! (Ctrl+V to paste)");
+            } else {
+                alert("Direct sharing is not supported. Please download the image.");
+            }
+        }
     });
 }
